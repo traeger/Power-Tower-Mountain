@@ -34,12 +34,9 @@ globals
 endglobals
 
 struct Tower
-  readonly static integer numAllocated = 0
-  readonly static Tower array towers
-  readonly integer arrayIndex
+  //! runtextmacro StructAlloc("Tower")
 
   //properties
-  readonly unit u
   readonly location p
   readonly integer ut //unit type
   readonly integer at //ability type
@@ -141,15 +138,9 @@ struct Tower
       endif
     endif
 
-    //try to allocate
-    set t = Tower.allocate()
-    if (t == nill) then
-      call showMessage("Critical Map Error: couldn't allocate Tower struct. Probably because of max array size. Damn you, Blizzard!")
-      return nill
-    endif
+	set t = Tower.alloc(u)
 
     //set values
-    set t.u = u
     set t.p = GetUnitLoc(u)
     set t.level = startingLevel
     call t.updateProperties()
@@ -170,21 +161,12 @@ struct Tower
     //endif
 
     //place in global array
-    set Tower.numAllocated = Tower.numAllocated + 1
-    set t.arrayIndex = Tower.numAllocated
-    set Tower.towers[Tower.numAllocated] = t
-    call SetUnitUserData(u, Tower.numAllocated)
-
+    
     call t.draw()
     return t
   endmethod
 
-  //////////
-  private method onDestroy takes nothing returns nothing
-    if (this == nill) then
-      return
-    endif
-
+  public method removeAllConnections takes nothing returns nothing
     //destroy incoming and outgoing transfers
     loop
       exitwhen this.numTransfersIn <= 0
@@ -194,39 +176,22 @@ struct Tower
       exitwhen this.numTransfersOut <= 0
       call this.transfersOut[this.numTransfersOut].destroy()
     endloop
+  endmethod
+  
+  //////////
+  private method onDestroy takes nothing returns nothing
+    if (this == nill) then
+      return
+    endif
 
-    //remove from global array
-    call SetUnitUserData(Tower.towers[Tower.numAllocated].u, this.arrayIndex)
-    call SetUnitUserData(this.u, 0)
-    set Tower.towers[this.arrayIndex] = Tower.towers[Tower.numAllocated]
-    set Tower.towers[Tower.numAllocated].arrayIndex = this.arrayIndex
-    set Tower.towers[Tower.numAllocated] = nill
+	call this.removeAllConnections()
 
     //destroy other stuff
     call RemoveLocation(this.p)
     set this.p = null
-    set this.u = null
-    set Tower.numAllocated = Tower.numAllocated - 1
-  endmethod
-
-  //////////
-  // Returns the tower structure of a given unit, if it exists
-  //////////
-  public static method fromUnit takes unit u returns Tower
-    local integer i
-    if (u == null) then
-      return nill
-    endif
-
-    //custom value should always point to the correct tower
-    set i = GetUnitUserData(u)
-    if (i > 0 or i <= Tower.numAllocated) then
-      if (Tower.towers[i].u == u) then
-        return Tower.towers[i]
-      endif
-    endif
-
-    return nill
+   
+    //remove from global array
+	call this.dealloc()
   endmethod
 
   //////////
@@ -551,7 +516,7 @@ struct Tower
     set p = GetOwningPlayer(this.u)
     set b = IsUnitSelected(this.u, p)
     set this.u = ReplaceUnitBJ(this.u, ut, bj_UNIT_STATE_METHOD_ABSOLUTE)
-    call SetUnitUserData(this.u, this.arrayIndex)
+    call SetUnitUserData(this.u, this.allocIndex)
     if(holdEnergie) then
       call this.setEnergy(this.lastEnergy)
     else
@@ -740,7 +705,7 @@ struct Tower
     local integer i = 1
     loop
       exitwhen i > Tower.numAllocated
-      set t = Tower.towers[i]
+      set t = Tower.allocs[i]
       if (isFurnace(t.ut)) then
         // the furnace should not burn grass if full of energy
         if((t.maxEnergy * 0.98) > t.getEnergy()) then
@@ -830,7 +795,7 @@ struct Tower
     set i = 1
     loop
       exitwhen i > Tower.numAllocated
-      set t = Tower.towers[i]
+      set t = Tower.allocs[i]
       
       if (t.generating == true) then
         call t.adjustEnergy(t.getGeneratedPower())
@@ -842,7 +807,7 @@ struct Tower
     set i = 1
     loop
       exitwhen i > Tower.numAllocated
-      call Tower.towers[i].transferEnergy()
+      call Tower.allocs[i].transferEnergy()
       set i = i + 1
     endloop
 
@@ -850,7 +815,7 @@ struct Tower
     set i = 1
     loop
       exitwhen i > Tower.numAllocated
-      call Tower.towers[i].draw()
+      call Tower.allocs[i].draw()
       set i = i + 1
     endloop
 
@@ -875,7 +840,7 @@ struct Tower
       set i = 1
       loop
         exitwhen i > Tower.numAllocated
-        set t = Tower.towers[i]
+        set t = Tower.allocs[i]
         if (isTeslaCoil(t.ut)) then
           call IssueTargetOrderBJ(t.u, "chainlightning", r.u)
           call IssueTargetOrderBJ(t.u, "chainlightning", this.u)

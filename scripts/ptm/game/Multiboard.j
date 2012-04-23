@@ -234,7 +234,7 @@ struct Multiboard
     set i = 1
     loop
       exitwhen i > Tower.numAllocated
-      set t = Tower.towers[i]
+      set t = Tower.allocs[i]
       set d = Defender.fromUnit(t.u)
       if (d != nill) then
         set n = d.index
