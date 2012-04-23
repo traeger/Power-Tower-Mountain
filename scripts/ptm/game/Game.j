@@ -381,7 +381,7 @@ struct Game
   private static method catchChat takes nothing returns nothing
     local string s = StringCase(GetEventPlayerChatString(), false)
     if (s == "-ready") then
-      call Game.makeDefenderReady(Defender.fromPlayer(GetTriggerPlayer()))
+	  call Game.makeDefenderReady(Defender.fromPlayer(GetTriggerPlayer()))
     endif
   endmethod
 

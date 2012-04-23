@@ -15,10 +15,6 @@
 globals
 endglobals
 
-function InitTrig_Events takes nothing returns nothing
-  call Events.init()
-endfunction
-
 struct Events
   readonly static boolean initialized = false
   private static group damageUnits = CreateGroup()
@@ -46,14 +42,9 @@ struct Events
   private static trigger trigItemSell = CreateTrigger()
   
   //////////
-  public static method init takes nothing returns nothing
+  public static method init0 takes nothing returns nothing
     local integer i
-    if (Events.initialized == true) then
-      call showMessage("Map Error: attempted to initialize Events structure twice.")
-      return
-    endif
-    set Events.initialized = true
-
+    
     call TriggerRegisterTimerEventPeriodic(Events.trigTick, 1.0)
     call TriggerRegisterAnyUnitEventBJ(Events.trigAttack, EVENT_PLAYER_UNIT_ATTACKED)
     call TriggerRegisterAnyUnitEventBJ(Events.trigDeath, EVENT_PLAYER_UNIT_DEATH)
@@ -83,6 +74,7 @@ struct Events
     call TriggerAddAction(Events.trigDeath, function Events.catchDeath)
     call TriggerAddAction(Events.trigDamageEvents, function Events.catchDamage)
   endmethod
+  //! runtextmacro Init("Events")
 
   //////////
   private static method create takes nothing returns Events
