@@ -145,7 +145,7 @@ library towerconstants
   
   
   constant function StoneOfWin takes nothing returns unit
-    return gg_unit_h042_0041
+    return null
   endfunction
   //////////
   constant function isStoneOfWin takes unit u returns boolean
