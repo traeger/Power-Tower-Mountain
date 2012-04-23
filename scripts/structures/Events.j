@@ -40,6 +40,8 @@ struct Events
   private static trigger trigChat = CreateTrigger()
   private static trigger trigEsc = CreateTrigger()
   private static trigger trigItemSell = CreateTrigger()
+  private static trigger trigUnitTargetEvent = CreateTrigger()
+  private static trigger trigUnitFinishedTraining = CreateTrigger()
   
   //////////
   public static method init0 takes nothing returns nothing
@@ -61,6 +63,8 @@ struct Events
     call TriggerRegisterAnyUnitEventBJ(Events.trigAbilFinish, EVENT_PLAYER_UNIT_SPELL_FINISH)
     call TriggerRegisterAnyUnitEventBJ(Events.trigAbilLearn, EVENT_PLAYER_HERO_SKILL)
     call TriggerRegisterAnyUnitEventBJ(Events.trigItemSell, EVENT_PLAYER_UNIT_SELL_ITEM )
+	call TriggerRegisterAnyUnitEventBJ(Events.trigUnitTargetEvent, EVENT_PLAYER_UNIT_ISSUED_TARGET_ORDER)
+	call TriggerRegisterAnyUnitEventBJ(Events.trigUnitFinishedTraining, EVENT_PLAYER_UNIT_TRAIN_FINISH)
         
     set i = 1
     loop
@@ -221,5 +225,13 @@ struct Events
     call TriggerAddAction(t, c)
     set t = null
     return true
+  endmethod
+  
+  public static method registerForUnitTargetEvent takes code c returns nothing
+    call TriggerAddAction(Events.trigUnitTargetEvent, c)
+  endmethod
+  
+  public static method registerForUnitFinishedTraining takes code c returns nothing
+    call TriggerAddAction(Events.trigUnitFinishedTraining, c)
   endmethod
 endstruct
