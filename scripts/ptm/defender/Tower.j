@@ -361,6 +361,10 @@ struct Tower
     if(not(this.generating)) then
       return 0
     endif
+	
+	if(isHarbor(this.ut)) then
+      return 0
+    endif
     
     return this.transferPower/2
   endmethod
