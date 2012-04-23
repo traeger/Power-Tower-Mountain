@@ -56,6 +56,10 @@ library towerconstants
   constant function isMoonwell takes integer ut returns boolean
     return (ut == 'h04K' or ut == 'h04L' or ut == 'h04M' or ut == 'h04N')
   endfunction  
+  //////////
+  constant function isHarbor takes integer ut returns boolean
+    return (ut == 'n007')
+  endfunction
 
   //////////
   constant function isRockLauncher takes integer ut returns boolean
@@ -138,7 +142,7 @@ library towerconstants
   //////////
   //////////
   constant function isGenerator takes integer ut returns boolean
-    return (isWaterWheel(ut) or isFurnace(ut) or isGraveyard(ut) or isMoonwell(ut) or isMagicStone(ut))
+    return (isWaterWheel(ut) or isFurnace(ut) or isGraveyard(ut) or isMoonwell(ut) or isMagicStone(ut) or isHarbor(ut))
   endfunction
   //////////
   constant function isCombatTower takes integer ut returns boolean
