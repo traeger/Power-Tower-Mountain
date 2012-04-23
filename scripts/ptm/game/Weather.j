@@ -16,12 +16,13 @@ struct Weather
   static integer current
   static weathereffect globalWeatherEffect = null
   
-  public static method init takes nothing returns nothing
+  public static method init0 takes nothing returns nothing
     //call Weather.changeGlobalWeather(WEATHER_TYPE_NON)
     
     //Events
     call Events.registerForChat(function Weather.catchChat)
   endmethod
+  //! runtextmacro Init("Weather")
   
   public static method changeGlobalWeather takes integer weather returns nothing
     local integer weatherEffect

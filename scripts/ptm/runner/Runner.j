@@ -27,7 +27,6 @@ globals
 endglobals
 
 struct Runner
-  readonly static boolean initialized = false
   readonly static integer numAllocated = 0
   readonly static Runner array runners
   readonly integer arrayIndex
@@ -43,11 +42,7 @@ struct Runner
   private Path path
 
   ////////
-  public static method init takes nothing returns nothing
-    if (Runner.initialized == true) then
-      call showMessage("Map Error: Runners tried to initialize twice")
-      return
-    endif
+  public static method init0 takes nothing returns nothing
     call Events.registerForDamage(function Runner.catchDamage)
     call Events.registerForPathing(function Runner.catchWaypoint)
     call Events.registerForDeath(function Runner.catchDeath)
@@ -55,8 +50,8 @@ struct Runner
     call Events.registerForNewTicker(VAL_REORDER_PERIOD, function Runner.catchReorderTick)
     //call Events.registerForAttack(function Runner.catchAttack)
     //call Events.registerForTick(function Runner.catchTick)
-    set Runner.initialized = true
   endmethod
+  //! runtextmacro Init("Runner")  
 
   //////////
   // Spawns a runner for a given defender

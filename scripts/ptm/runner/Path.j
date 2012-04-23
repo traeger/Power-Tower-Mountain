@@ -14,7 +14,6 @@ globals
 endglobals
 
 struct Path
-  readonly static boolean initialized = false
   readonly static Path array references
   readonly static integer numAllocated = 0
 
@@ -25,15 +24,9 @@ struct Path
   private integer length
   private integer mainPathEnterIndex
 
-  public static method init takes nothing returns nothing
+  public static method init0 takes nothing returns nothing
     local integer i
     local Path h
-    
-    if (Path.initialized == true) then
-      call showMessage("Map Error: tried to initialize Path more than once.")
-      return
-    endif
-    set Path.initialized = true
     
     set Path.mainPathingRects[0] = makeSimplePathingRect(gg_rct_Pathing_0)
     set Path.mainPathingRects[1] = makeSimplePathingRect(gg_rct_Pathing_01)
@@ -88,6 +81,7 @@ struct Path
     //...
     //call h.add(gg_rct_Pathing_12)
   endmethod
+  //! runtextmacro Init("Path")
 
   ////////////
   // Create a new Path

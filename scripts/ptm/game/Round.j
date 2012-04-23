@@ -29,7 +29,6 @@ endglobals
 
 struct Round
   //
-  readonly static boolean initialized = false
   readonly static integer numAllocated = 0
   readonly static Round array objects
   readonly integer arrayIndex
@@ -55,15 +54,9 @@ struct Round
   readonly Spawner spawner
   //readonly integer numSpawnsLeftInRound = 0
   
-  public static method init takes nothing returns nothing
+  public static method init0 takes nothing returns nothing
     local integer i
-    
-    if (Round.initialized == true) then
-      call showMessage("Map Error: Round tried to initialize twice")
-      return
-    endif
-    set Round.initialized = true
-    
+
     // create the runner-runnertypes
     call RaceGenerator.init()
     
@@ -73,6 +66,7 @@ struct Round
     set Round.runnertypes[VAL_RUNNERGEN_TYPE_MAGIC] =  RaceGenerator.create(VAL_RUNNERGEN_TYPE_MAGIC, gg_rct_rg_magic)
     set Round.runnertypes[VAL_RUNNERGEN_TYPE_BOSS] =  RaceGenerator.create(VAL_RUNNERGEN_TYPE_BOSS, gg_rct_rg_boss)
   endmethod
+  //! runtextmacro Init("Round")
   
   ////////
   public static method create takes integer roundNr returns Round
@@ -570,13 +564,10 @@ struct RaceGenerator
   
   // not need to init currently
   //////////////////////////
-  public static method init takes nothing returns nothing
-    if (RaceGenerator.initialized == true) then
-      call showMessage("Map Error: tried to initialize Runner.Generator.Type more than once.")
-      return
-    endif
-    set RaceGenerator.initialized = true
+  public static method init0 takes nothing returns nothing
+    
   endmethod
+  //! runtextmacro Init("RaceGenerator")
 
   //////////////////////////
   // creates a Round_Race by set the possible unittyps

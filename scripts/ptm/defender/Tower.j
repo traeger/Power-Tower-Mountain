@@ -33,12 +33,7 @@ globals
   constant real MAX_WATER_BURST_TARGETS = 5
 endglobals
 
-function InitTrig_Tower takes nothing returns nothing
-  call Tower.init()
-endfunction
-
 struct Tower
-  readonly static boolean initialized = false
   readonly static integer numAllocated = 0
   readonly static Tower array towers
   readonly integer arrayIndex
@@ -68,13 +63,7 @@ struct Tower
   private integer totalLastReceived = 0
 
   ////////
-  public static method init takes nothing returns boolean
-    if (Tower.initialized == true) then
-      call showMessage("Critical Map Error: Tried to initialize towers twice.")
-      return false
-    endif
-    set Tower.initialized = true
-
+  public static method init0 takes nothing returns boolean
     call Events.registerForDeath(function Tower.catchDeath)
     call Events.registerForTick(function Tower.catchTick)
     call Events.registerForAttack(function Tower.catchAttack)
@@ -87,8 +76,10 @@ struct Tower
     call Events.registerForLearnAbility(function Tower.catchLearn)
     call Events.registerForChannelingAbility(function Tower.catchChannelingAbility)
     call Events.registerForNewTicker(VAL_FURNACE_FUEL_PERIOD, function Tower.catchFurnaceTick)
+
     return true
   endmethod
+  //! runtextmacro Init("Tower")
 
   //////////
   // Creates a tower structure for a given unit
@@ -102,6 +93,8 @@ struct Tower
     local real x
     local real y
     local integer tile
+	
+	call debugMsg("creating tower object", DEBUG)
     
     if (u == null) then
       return nill

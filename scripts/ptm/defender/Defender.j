@@ -31,7 +31,6 @@ globals
 endglobals
 
 struct Defender
-  readonly static boolean initialized = false
   readonly static Defender array defenders[NUM_DEFENDERS]
   readonly static integer numAllocated = 0
   
@@ -46,14 +45,9 @@ struct Defender
   
   readonly integer killedRunner = 0
 
-  public static method init takes nothing returns nothing
+  public static method init0 takes nothing returns nothing
     local integer i
     
-    if (Defender.initialized == true) then
-      call showMessage("Map Error: tried to initialize Defender more than once.")
-      return
-    endif
-    set Defender.initialized = true
     //PTM: map prot, killed cause the massage sucks
     //if (H2I(Location(000.10,495.83)) != 1049583) then //make sure pathing centered
     //  call showMessage(I2S(H2I(Location(000.10,495.83))))
@@ -78,6 +72,7 @@ struct Defender
     //call Events.registerForEsc(function Defender.catchEsc)
     call Events.registerForItemSell(function Defender.catchItemSell)
   endmethod
+  //! runtextmacro Init("Defender")
 
   ////////////
   //Creates and sets up a defender

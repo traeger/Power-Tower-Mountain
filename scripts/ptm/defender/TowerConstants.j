@@ -28,6 +28,8 @@ library towerconstants
     constant integer TOWER_TYPE_MOONWELL_1 = 'h04K'
     constant integer TOWER_TYPE_WATERWHEEL_1 = 'h004'
     constant integer TOWER_TYPE_MAGICSTONE = 'h04Q'
+
+    unit STONE_OF_VICTORY
   endglobals
   
   //////////
@@ -143,12 +145,15 @@ library towerconstants
     return (not isBridgingTower(ut) and not isGenerator(ut))
   endfunction
   
-  
-  constant function StoneOfWin takes nothing returns unit
-    return null
+  function setStoneOfWin takes unit u returns nothing
+    set STONE_OF_VICTORY = u
+  endfunction
+
+  function StoneOfWin takes nothing returns unit
+    return STONE_OF_VICTORY
   endfunction
   //////////
-  constant function isStoneOfWin takes unit u returns boolean
+  function isStoneOfWin takes unit u returns boolean
     return u == StoneOfWin()
   endfunction
 

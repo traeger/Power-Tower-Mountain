@@ -51,7 +51,6 @@ endglobals
 
 struct Game
   //state
-  readonly static boolean initialized = false
   public static integer state = VAL_GAME_STATE_INTRO
   readonly static integer time = 0
   private static integer grassRegrowingCol = 0
@@ -73,13 +72,7 @@ struct Game
   readonly static Round nextRound
   
   ////////
-  public static method init takes nothing returns boolean
-    if (Game.initialized == true) then
-      call showMessage("Critical Map Error: Tried to initialize game twice.")
-      return false
-    endif
-    set Game.initialized = true
-
+  private static method init0 takes nothing returns boolean
     //initialize values
     set Game.roundTimer = Timer.create("Spawning In")
     call Game.roundTimer.registerForTimeout(function Game.catchRoundTimer)
@@ -94,9 +87,10 @@ struct Game
     call Events.registerForNewTicker(VAL_GRASS_REGROW_PERIOD, function Game.catchGrassTick)
     call Events.registerForTick(function Game.catchTryEndRound)
     call Events.registerForDeath(function Game.catchTryEndRound)
-
+	
     return true
   endmethod
+  //! runtextmacro Init("Game")
 
   ////////
   private static method create takes nothing returns Game

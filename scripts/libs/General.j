@@ -8,6 +8,10 @@ library general
     constant string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890:. |'"
     constant string hexMap= "0123456789ABCDEF"
     constant integer numChars = StringLength(chars)
+	
+	constant integer DEBUG = 1
+	constant integer WARNING = 2
+	constant integer FATAL = 3
   endglobals
 
   //===============================================================
@@ -195,6 +199,10 @@ library general
   //////////
   function doEvents takes nothing returns nothing
     call PolledWait(0.01)
+  endfunction
+  
+  function debugMsg takes string s, integer id returns nothing
+    call DisplayTextToForce(GetPlayersAll(), "> " + s)
   endfunction
 
 endlibrary
