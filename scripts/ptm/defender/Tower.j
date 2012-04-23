@@ -961,13 +961,12 @@ struct Tower
 
       //Transfer Range
       if (isBridgingTower(this.ut) or isGenerator(this.ut)) then
-        if(Tower.fromUnit(u).hasLongTransfer()) then
-          call createCircleEffect(p, VAL_TRANSFER_LONGRANGE, "Doodads\\Cinematic\\GlowingRunes\\GlowingRunes6.mdl")
-        else
-          call createCircleEffect(p, VAL_TRANSFER_RANGE, "Doodads\\Cinematic\\GlowingRunes\\GlowingRunes6.mdl")
-        endif
-      endif
-
+	    if (isBridgingTower(this.ut)) then
+		  call createCircleEffect(p, VAL_TRANSFER_LONGRANGE, "Doodads\\Cinematic\\GlowingRunes\\GlowingRunes6.mdl")
+		endif
+        call createCircleEffect(p, VAL_TRANSFER_RANGE, "Doodads\\Cinematic\\GlowingRunes\\GlowingRunes6.mdl")
+	  endif
+	  
       call RemoveLocation(p)
       set p = null
     endif

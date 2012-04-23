@@ -89,7 +89,7 @@ struct TowerTransfer
         elseif (dst == null or dst == src) then
             call showUnitText(src.u, "Invalid Target", 100, 0, 0)
             return nill
-        elseif (src.numTransfersOut >= VAL_MAX_TOWER_TRANSFERS) then
+        elseif (src.numTransfersOut >= VAL_MAX_TOWER_TRANSFERS or src.isTransferingLong) then
             call showUnitText(src.u, "Max Transfers Out", 100, 0, 0)
             return nill     
         elseif (dst.numTransfersIn >= VAL_MAX_TOWER_TRANSFERS) then
