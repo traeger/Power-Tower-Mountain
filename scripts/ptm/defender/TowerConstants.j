@@ -34,7 +34,7 @@ library towerconstants
   
   //////////
   constant function isBridgingTower takes integer ut returns boolean
-    return (ut == 'h003' or ut == 'h007' or ut == 'h008' or ut == 'h01P' or ut == 'h01Q' or ut == 'h01R' or ut == 'h042')
+    return (ut == 'h003' or ut == 'h007' or ut == 'h008' or ut == 'h01P' or ut == 'h01Q' or ut == 'h01R' or ut == 'h042' or ut == 'h054')
   endfunction
   //////////
   constant function isMagicStone takes integer ut returns boolean
