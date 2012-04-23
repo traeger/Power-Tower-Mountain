@@ -11,6 +11,8 @@ struct PTM
     call Path.init()
 	
 	call Weather.init()
+	
+	call OilTanker.init()
 
     //Defender must be the last to initialize
     call TriggerRegisterTimerEventSingle(t, 0.00)
