@@ -17,6 +17,7 @@
 // ptm
 ////////////
 
+//! import "scripts/ptm/defender/Skills.j"
 //! import "scripts/ptm/defender/Defender.j"
 //! import "scripts/ptm/defender/TowerConstants.j"
 //! import "scripts/ptm/defender/Tower.j"

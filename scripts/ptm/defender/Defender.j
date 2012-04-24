@@ -43,14 +43,10 @@ struct Defender
   
   readonly integer killedRunner = 0
 
+  private integer array skills
+
   public static method init0 takes nothing returns nothing
     local integer i
-    
-    //PTM: map prot, killed cause the massage sucks
-    //if (H2I(Location(000.10,495.83)) != 1049583) then //make sure pathing centered
-    //  call showMessage(I2S(H2I(Location(000.10,495.83))))
-    //  set prep = false
-    //endif
 
     set i = 1
     loop
@@ -282,6 +278,28 @@ struct Defender
     endif
     return GetPlayerState(this.p, PLAYER_STATE_RESOURCE_FOOD_CAP)
   endmethod
+
+  public method getSkillLevel takes integer skill returns integer
+    return this.skills[skill]
+  endmethod
+
+  public method setSkillLevel takes integer skill, integer mod returns integer
+    if(mod < 0) then
+      set this.skills[skill] = 0
+    else
+      set this.skills[skill] = mod
+    endif
+    return this.skills[skill]
+  endmethod
+
+  public method modSkillLevel takes integer skill, integer mod returns integer
+    return this.setSkillLevel(this.getSkillLevel(skill) + mod)
+  endmethod
+
+  public method incSkillLevel takes integer skill returns integer
+    return this.modSkillLevel(skill, 1)
+  endmethod
+
   //=====================================
   //=== MUTATORS ========================
   //=====================================
