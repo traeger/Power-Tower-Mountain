@@ -14,27 +14,27 @@ struct Intro
   endmethod
   
   private static method exec_start takes nothing returns nothing
-    local integer i = 1
     local Defender d
+	
+	call Defender.iterate()
     loop
-      exitwhen i > NUM_DEFENDERS
-      set d = Defender.defenders[i]
+      exitwhen Defender.iterateFinished()
+      set d = Defender.next()
       if(d != Defender.getMainDefender()) then
         call CameraSetupApplyForPlayer( true, gg_cam_Tutorial_OverviewStart, d.p, 0 )
         call CameraSetupApplyForPlayer( true, gg_cam_Tutorial_Overview1, d.p, 10 )
       endif
-      set i = i + 1
     endloop
     call TriggerSleepAction(9)
     call showMessage("bla")
-    set i = 1
-    loop
-      exitwhen i > NUM_DEFENDERS
-      set d = Defender.defenders[i]
+    
+	call Defender.iterate()
+	loop
+      exitwhen Defender.iterateFinished()
+      set d = Defender.next()
       if(d != Defender.getMainDefender()) then
         call CameraSetupApplyForPlayer( true, gg_cam_Tutorial_Overview2, d.p, 10 )
       endif
-      set i = i + 1
     endloop
   endmethod
 endstruct

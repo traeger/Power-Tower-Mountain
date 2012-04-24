@@ -153,22 +153,23 @@ struct Multiboard
   public static method assignDefenderRows takes nothing returns boolean
     local integer i
     local integer row
+	local Defender d
     if (Multiboard.board == null) then
       return false
     endif
 
     //assign rows in order
-    set i = 1
     set row = NUM_MULTIBOARD_HEADER_ROWS+1
+	call Defender.iterate()
     loop
-      exitwhen i > NUM_DEFENDERS
-      if (Defender.defenders[i].isPresent()) then
-        set Multiboard.defenderRows[i] = row
+      exitwhen Defender.iterateFinished()
+	  set d = Defender.next()
+      if (d.isPresent()) then
+        set Multiboard.defenderRows[d.index()] = row
         set row = row + 1
       else
-        set Multiboard.defenderRows[i] = 0
+        set Multiboard.defenderRows[d.index()] = 0
       endif
-      set i = i + 1
     endloop
 
     //resize board
@@ -231,13 +232,13 @@ struct Multiboard
     endloop
 
     //calculate defender stats
-    set i = 1
+    call Tower.iterate()
     loop
-      exitwhen i > Tower.numAllocated
-      set t = Tower.allocs[i]
+      exitwhen Tower.iterateFinished()
+      set t = Tower.next()
       set d = Defender.fromUnit(t.u)
       if (d != nill) then
-        set n = d.index
+        set n = d.index()
         set Multiboard.defenderStatsProduc[n] = Multiboard.defenderStatsProduc[n] + t.getEstimatedProduction()
         set Multiboard.defenderStatsDrain[n] = Multiboard.defenderStatsDrain[n] + t.getEstimatedDrain()
         set Multiboard.defenderStatsAvail[n] = Multiboard.defenderStatsAvail[n] + t.getEnergy()
@@ -263,17 +264,17 @@ struct Multiboard
     call MultiboardSetItemValueBJ(Multiboard.board, 2, 6, "Runners: |cFFFFCC00" + I2S(Game.getNumRunnersLeft()) + "|r")
 
     //update defender cells
-    set i = 1
+    call Defender.iterate()
     loop
-      exitwhen i > NUM_DEFENDERS
-      set d = Defender.defenders[i]
+      exitwhen Defender.iterateFinished()
+      set d = Defender.next()
       set n = Multiboard.defenderRows[i]
       if (n > NUM_MULTIBOARD_HEADER_ROWS) then
         call MultiboardSetItemValueBJ(Multiboard.board, 1, n, d.getNameWithColor())
         if (d.isDefending()) then
-          call MultiboardSetItemValueBJ(Multiboard.board, 2, n, cSmallStr(Multiboard.defenderStatsAvail[i]))
-          call MultiboardSetItemValueBJ(Multiboard.board, 3, n, cSmallStr(Multiboard.defenderStatsProduc[i]))
-          call MultiboardSetItemValueBJ(Multiboard.board, 4, n, cSmallStr(Multiboard.defenderStatsDrain[i]))
+          call MultiboardSetItemValueBJ(Multiboard.board, 2, n, cSmallStr(Multiboard.defenderStatsAvail[d.index()]))
+          call MultiboardSetItemValueBJ(Multiboard.board, 3, n, cSmallStr(Multiboard.defenderStatsProduc[d.index()]))
+          call MultiboardSetItemValueBJ(Multiboard.board, 4, n, cSmallStr(Multiboard.defenderStatsDrain[d.index()]))
           //call MultiboardSetItemValueBJ(Multiboard.board, 5, n, cSmallStr(R2I(Multiboard.defenderStatsDamage[i])))
         else
           call MultiboardSetItemValueBJ(Multiboard.board, 2, n, "-")
@@ -282,8 +283,6 @@ struct Multiboard
           //call MultiboardSetItemValueBJ(Multiboard.board, 5, n, "-")
         endif
       endif
-
-      set i = i + 1
     endloop
 
     return true
@@ -298,7 +297,7 @@ struct Multiboard
   private static method catchDamage takes nothing returns nothing
     local Defender d = Defender.fromUnit(GetEventDamageSource())
     if (d != nill) then
-      set Multiboard.defenderStatsDamage[d.index] = Multiboard.defenderStatsDamage[d.index] + GetEventDamage()
+      set Multiboard.defenderStatsDamage[d.index()] = Multiboard.defenderStatsDamage[d.index()] + GetEventDamage()
     endif
   endmethod
 

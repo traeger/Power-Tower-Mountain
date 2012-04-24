@@ -1,5 +1,5 @@
 struct OilTanker
-  //! runtextmacro StructAlloc("OilTanker")
+  //! runtextmacro StructAlloc_Unit("OilTanker")
   //! runtextmacro Init("OilTanker")
   
   private integer goldPerHarvest = 1

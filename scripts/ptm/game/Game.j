@@ -119,8 +119,6 @@ struct Game
   //=== DEFENDER PROPERTIES =============
   //=====================================
   public static method isDefenderStreamActive takes Defender d returns boolean
-    local integer i
-    local Defender d2
     if (d == nill) then
       return false
     endif
@@ -130,15 +128,14 @@ struct Game
     endif
 
     if (Game.gameType != VAL_GAME_TYPE_COOP_COUNTCHECK) then
-      set i = 1
-      loop
-        exitwhen i > NUM_DEFENDERS
-        set d2 = Defender.defenders[i]
-        if d2.isDefending() then
+	  call Defender.iterate()
+	  loop
+	    exitwhen Defender.iterateFinished()
+		if Defender.next().isDefending() then
+		  call Defender.enditerate()
           return true
         endif
-        set i = i + 1
-      endloop
+	  endloop
     endif
 
     return false
@@ -147,32 +144,31 @@ struct Game
   public static method countDefenderStreamActive takes nothing returns integer
     local integer i = 1
     local integer n = 0
-    loop
-      exitwhen i > NUM_DEFENDERS
-      if (Game.isDefenderStreamActive(Defender.defenders[i])) then
+	
+	call Defender.iterate()
+	loop
+	  exitwhen Defender.iterateFinished()
+	  if (Game.isDefenderStreamActive(Defender.next())) then
         set n = n + 1
       endif
-      set i = i + 1
-    endloop
+	endloop
+	
     return n
   endmethod
   
   public static method countDefenderAllies takes Defender d returns integer
-    local integer i
     local integer n = 0
     local Defender d2
     if (d == nill) then
       return 0
     endif
   
-    set i = 1
+    call Defender.iterate()
     loop
-      exitwhen i > NUM_DEFENDERS
-      set d2 = Defender.defenders[i]
-      if (d2.isDefending()) then
+      exitwhen Defender.iterateFinished()
+      if (Defender.next().isDefending()) then
         set n = n + 1
       endif
-      set i = i + 1
     endloop
   
     return n
@@ -195,7 +191,6 @@ struct Game
   //=====================================
   ////////
   public static method startGame takes string caption, integer difficulty, integer gameType, integer runner, integer numRounds, integer numLives, boolean fairIncome, boolean gameStyle returns boolean
-    local integer i
     local group ug
     local unit u
     if (Game.state != VAL_GAME_STATE_INTRO) then
@@ -209,11 +204,10 @@ struct Game
     set Game.numRounds = numRounds
     set Game.gameStyle = gameStyle
     set Game.runner = runner
-    set i = 1
+	call Defender.iterate()
     loop
-      exitwhen i > NUM_DEFENDERS
-      call Defender.defenders[i].setInitialLives(numLives)
-      set i = i + 1
+      exitwhen Defender.iterateFinished()
+      call Defender.next().setInitialLives(numLives)
     endloop
     
     //start
@@ -237,15 +231,15 @@ struct Game
   // Sets a defender's status to ready, and skips the round timer ahead if all are ready
   ////////
   public static method makeDefenderReady takes Defender d returns nothing
-    local integer i
     local integer n
     local string s
+	local integer i
     if (Game.state != VAL_GAME_STATE_WAITING or d == nill or d.isDefending() == false) then
       return
     endif
 
     //Place the Vote
-    set Game.defendersReadyRound[d.index] = Game.round + 1
+    set Game.defendersReadyRound[d.index()] = Game.round + 1
     call showMessage(d.getNameWithColor() + " is ready")
 
     //Enumerate un-ready players
@@ -254,11 +248,11 @@ struct Game
     set s = ""
     loop
       exitwhen i > NUM_DEFENDERS
-      if (Game.defendersReadyRound[i] <= Game.round and Defender.defenders[i].isDefending()) then
+      if (Game.defendersReadyRound[i] <= Game.round and Defender.fromIndex(i).isDefending()) then
         if (n > 0) then
           set s = s + ", "
         endif
-        set s = s + Defender.defenders[i].getNameWithColor()
+        set s = s + Defender.fromIndex(i).getNameWithColor()
         set n = n + 1
       endif
       set i = i + 1
@@ -284,7 +278,6 @@ struct Game
   public static method exec_checkForGameOver takes nothing returns nothing
     local Defender d
     local boolean b = false
-    local integer i
     // win with full man at stone of win
     if (Game.state == VAL_GAME_STATE_STONEWIN) then
       set b = true
@@ -306,14 +299,13 @@ struct Game
       set Game.state = VAL_GAME_STATE_OVER
 
       //Show "You Win!" messages
-      set i = 1
+      call Defender.iterate()
       loop
-        exitwhen i > NUM_DEFENDERS
-        set d = Defender.defenders[i]
+        exitwhen Defender.iterateFinished()
+        set d = Defender.next()
         if (d.isDefending()) then
           call showPlayerMessage(d.p, "|cFFFFCC00Congratulations! You have survived!")
         endif
-        set i = i + 1
       endloop
 
       //Give time for end to sink in
@@ -321,16 +313,15 @@ struct Game
       call TriggerSleepAction(50.0)
 
       //End the game
-      set i = 1
+      call Defender.iterate()
       loop
-        exitwhen i > NUM_DEFENDERS
-        set d = Defender.defenders[i]
+        exitwhen Defender.iterateFinished()
+        set d = Defender.next()
         if (d.isDefending()) then
           call CustomVictoryBJ(d.p, true, true)
         elseif (d.isPresent()) then
           call CustomDefeatBJ(d.p, "Defeated!")
         endif
-        set i = i + 1
       endloop
     endif
   endmethod
@@ -403,7 +394,6 @@ struct Game
   // return = true if the round was ended
   ////////
   private static method catchTryEndRound takes nothing returns boolean
-    local integer i
     local integer roundTech = 0
     local Defender d
     
@@ -424,10 +414,10 @@ struct Game
 
     //Message, Money, and Tech for Defenders
     call showMessage("Round " + I2S(Game.round) + " Finished!")
-    set i = 1
-    loop
-      exitwhen i > NUM_DEFENDERS
-      set d = Defender.defenders[i]
+    call Defender.iterate()
+	loop
+      exitwhen Defender.iterateFinished()
+      set d = Defender.next()
       if (d.isDefending()) then
         call showPlayerMessage(d.p, "|cFFFFCC00+" + I2S(Game.currentRound.getRoundFinishBounty()) + " Bonus Gold|r")
         call AdjustPlayerStateBJ(Game.currentRound.getRoundFinishBounty(), d.p, PLAYER_STATE_RESOURCE_GOLD)
@@ -435,7 +425,6 @@ struct Game
           call SetPlayerTechResearchedSwap(roundTech, 1, d.p)
         endif
       endif
-      set i = i + 1
     endloop
 
     // seams the import is missing - resulting in a fatal error

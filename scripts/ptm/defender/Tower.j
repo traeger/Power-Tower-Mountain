@@ -34,7 +34,8 @@ globals
 endglobals
 
 struct Tower
-  //! runtextmacro StructAlloc("Tower")
+  //! runtextmacro StructAlloc_Unit("Tower")
+  //! runtextmacro StructIterable("Tower")
 
   //properties
   readonly location p
@@ -706,10 +707,11 @@ struct Tower
   //////////
   private static method catchFurnaceTick takes nothing returns nothing
     local Tower t
-    local integer i = 1
+    
+	call Tower.iterate()
     loop
-      exitwhen i > Tower.numAllocated
-      set t = Tower.allocs[i]
+      exitwhen Tower.iterateFinished()
+      set t = Tower.next()
       if (isFurnace(t.ut)) then
         // the furnace should not burn grass if full of energy
         if((t.maxEnergy * 0.98) > t.getEnergy()) then
@@ -719,7 +721,6 @@ struct Tower
           endif
         endif
       endif
-      set i = i + 1
     endloop
   endmethod
 
@@ -792,36 +793,31 @@ struct Tower
   // Updates all towers by one second
   //////////
   private static method catchTick takes nothing returns nothing
-    local integer i
     local Tower t
 
-    //generate
-    set i = 1
-    loop
-      exitwhen i > Tower.numAllocated
-      set t = Tower.allocs[i]
-      
+	call Tower.iterate()
+	loop
+	  exitwhen Tower.iterateFinished()
+	  set t = Tower.next()
+
       if (t.generating == true) then
         call t.adjustEnergy(t.getGeneratedPower())
       endif
-      set i = i + 1
-    endloop
+	endloop
 
     //transfer energy
-    set i = 1
-    loop
-      exitwhen i > Tower.numAllocated
-      call Tower.allocs[i].transferEnergy()
-      set i = i + 1
-    endloop
-
-    //draw (calculates defender stats and resets for next tick)
-    set i = 1
-    loop
-      exitwhen i > Tower.numAllocated
-      call Tower.allocs[i].draw()
-      set i = i + 1
-    endloop
+	call Tower.iterate()
+	loop
+	  exitwhen Tower.iterateFinished()
+	  call Tower.next().transferEnergy()
+	endloop
+	
+	//transfer energy
+	call Tower.iterate()
+	loop
+	  exitwhen Tower.iterateFinished()
+	  call Tower.next().draw()
+	endloop
 
     //finish
     call Multiboard.update()
@@ -841,17 +837,15 @@ struct Tower
     endif
 
     if (isTeslaCoil(this.ut)) then
-      set i = 1
-      loop
-        exitwhen i > Tower.numAllocated
-        set t = Tower.allocs[i]
-        if (isTeslaCoil(t.ut)) then
+	  call Tower.iterate()
+	  loop
+	    exitwhen Tower.iterateFinished()
+		set t = Tower.next()
+		if (isTeslaCoil(t.ut)) then
           call IssueTargetOrderBJ(t.u, "chainlightning", r.u)
           call IssueTargetOrderBJ(t.u, "chainlightning", this.u)
         endif
-        set i = i + 1
-      endloop
-      
+	  endloop
     elseif (isDevourTower(this.ut)) then
       call IssueTargetOrderBJ(this.u, "chainlightning", r.u)
     elseif (isLichTower(this.ut)) then

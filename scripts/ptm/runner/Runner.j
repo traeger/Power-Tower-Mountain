@@ -296,7 +296,6 @@ struct Runner
   private static method catchWaypoint takes nothing returns nothing
     local Runner r = Runner.fromUnit(GetTriggerUnit())
     local string s
-    local integer i
     local integer n
     local integer k
     local Defender d
@@ -328,12 +327,11 @@ struct Runner
     if (Game.round > 1) then
       call showMessage("Everyone lost " + I2S(k) + " life!")
     
-      set i = 1
-      loop
-        exitwhen i > NUM_DEFENDERS
-
-        set d = Defender.defenders[i]
-        if (d.isDefending()) then
+	  call Defender.iterate()
+	  loop
+	    exitwhen Defender.iterateFinished()
+		set d = Defender.next()
+		if (d.isDefending()) then
           set n = 1
           loop
             exitwhen n > k
@@ -343,8 +341,7 @@ struct Runner
             set n = n + 1
           endloop
         endif
-        set i = i + 1
-      endloop
+	  endloop
     else
       call showMessage("Misses are forgiven during the first round.")
     endif
@@ -429,7 +426,7 @@ struct Runner
       //set gold = ((Game.countDefenderAllies(d) - Game.countDefenderStreamActive()) * Game.getRoundRunnerBounty()) / Game.countDefenderStreamActive()
       loop
         set Runner.coopDivideIndex = imod(Runner.coopDivideIndex, NUM_DEFENDERS) + 1
-        set d = Defender.defenders[Runner.coopDivideIndex]
+        set d = Defender.fromIndex(Runner.coopDivideIndex)
         exitwhen d.isDefending() == true
       endloop
       
@@ -440,7 +437,7 @@ struct Runner
       //divided equally
       loop
         set Runner.coopDivideIndex = imod(Runner.coopDivideIndex, NUM_DEFENDERS) + 1
-        set d = Defender.defenders[Runner.coopDivideIndex]
+        set d = Defender.fromIndex(Runner.coopDivideIndex)
         exitwhen d.isDefending() == true
       endloop
     //elseif (Game.gameType == VAL_GAME_TYPE_SOLO) then

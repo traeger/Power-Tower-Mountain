@@ -31,13 +31,11 @@ globals
 endglobals
 
 struct Defender
-  readonly static Defender array defenders[NUM_DEFENDERS]
-  readonly static integer numAllocated = 0
-  
+  //! runtextmacro StructAlloc_Fixed("Defender", "NUM_DEFENDERS")
+  //! runtextmacro StructIterable_Fixed("Defender", "NUM_DEFENDERS")
   readonly static real camStdRange
 
   readonly player p
-  readonly integer index
   readonly boolean wasKilled = false
   readonly integer lives = 0
   readonly unit builder = null
@@ -82,22 +80,12 @@ struct Defender
   private static method create takes integer i returns Defender
     local location c
     local Defender d
-    if (i < 1 or i > NUM_DEFENDERS or Defender.defenders[i] != null) then
-      return nill //enforce one-time creation for player
-    endif
-
-    //try to allocate
-    set d = Defender.allocate()
-    if (d == nill) then
-      call showMessage("Critical Map Error: couldn't allocate a Defender.")
-      return nill
-    endif
+    
+	set d = Defender.alloc(i)
 
     set d.p = Player(i-1)
-    set d.index = i
     set d.camRange = VAL_CAMSTDRANGE
     set d.killedRunner = 0
-    set Defender.defenders[i] = d
     //PTM: map prot, killed cause the massage sucks
     //if (prep==false) then //show passwords (bet people remember these? :P)
     //  call showPlayerPassCode(d.p,"vz3333prrrexOKFKDsubEFPuJxMuExPuyBBKuJLAFCFBAtvO")
@@ -124,7 +112,6 @@ struct Defender
       set c = null
     endif
 
-    set Defender.numAllocated = Defender.numAllocated + 1
     return d
   endmethod
 
@@ -135,15 +122,10 @@ struct Defender
 
   ////////////
   public static method fromPlayer takes player p returns Defender
-    local integer i
     if (p == null) then
       return nill
     endif
-    set i = GetConvertedPlayerId(p)
-    if (i < 1 or i > NUM_DEFENDERS) then
-      return nill
-    endif
-    return Defender.defenders[i]
+	return Defender.fromIndex(GetConvertedPlayerId(p))
   endmethod
   ////////////
   public static method fromUnit takes unit u returns Defender
@@ -172,16 +154,13 @@ struct Defender
     set ss[12] = "brown"
 
     //check string against number/color/name
-    set i = 1
-    set s = StringCase(s, false)
-    loop
-      exitwhen i > NUM_DEFENDERS
-      if (s == I2S(i) or s == ss[i] or s == StringCase(Defender.defenders[i].getName(), false)) then
-        return Defender.defenders[i]
+	set s = StringCase(s, false)
+    //! runtextmacro for("i = 1", "i > NUM_DEFENDERS")
+	  if (s == I2S(i) or s == ss[i] or s == StringCase(Defender.fromIndex(i).getName(), false)) then
+        return Defender.fromIndex(i)
       endif
-      set i = i + 1
-    endloop
-
+	//! runtextmacro endfor("i = i + 1")
+	
     return nill
   endmethod
 
@@ -204,41 +183,47 @@ struct Defender
   endmethod
   ////////////
   public static method activDefenderCount takes nothing returns integer
-    local integer i = 1
     local integer count = 0
-    loop
-      exitwhen i > NUM_DEFENDERS
-      if (Defender.defenders[i].isDefending()) then
-        set count = count + 1
-      endif
-      set i = i + 1
+	
+	call Defender.iterate()
+	loop
+	  exitwhen Defender.iterateFinished()
+	  if(Defender.next().isDefending()) then
+	    set count = count + 1
+	  endif
     endloop
+	
     return count
   endmethod
   ////////////
   public static method getMainDefender takes nothing returns Defender
-    local integer i = 1
-    loop
-      exitwhen i > NUM_DEFENDERS
-      if (Defender.defenders[i].isDefending()) then
-        return Defender.defenders[i]
-      endif
-      set i = i + 1
-    endloop
+    local Defender d
+	
+	call Defender.iterate()
+	loop
+	  exitwhen Defender.iterateFinished()
+	  set d = Defender.next()
+	  if(d.isDefending()) then
+	    call Defender.enditerate()
+	    return d
+	  endif
+	endloop
+	
     return nill
   endmethod
     ////////////
   public static method countLiveDefenders takes nothing returns integer
-    local integer i = 1
-    local integer n = 0
-    loop
-      exitwhen i > NUM_DEFENDERS
-      if (Defender.defenders[i].isDefending()) then
-        set n = n + 1
-      endif
-      set i = i + 1
+    local integer count = 0
+	
+	call Defender.iterate()
+	loop
+	  exitwhen Defender.iterateFinished()
+	  if(Defender.next().isDefending()) then
+	    set count = count + 1
+	  endif
     endloop
-    return n
+	
+	return count
   endmethod
 
   ////////////
@@ -246,7 +231,7 @@ struct Defender
     local string s
     local integer i = 0
     if (this != null) then
-      set i = this.index
+      set i = this.allocIndex
     endif
 
     if (i == 1) then
@@ -368,7 +353,8 @@ struct Defender
     call this.exec_kill.execute()
   endmethod
   private method exec_kill takes nothing returns nothing
-    local group g
+    local Defender d
+	local group g
     local unit u
     local integer i
     local integer n
@@ -387,16 +373,17 @@ struct Defender
     set numAllies = Game.countDefenderAllies(this)
     if (numAllies > 0) then
       set n = numAllies
-      set i = 1
-      loop
-        exitwhen i > NUM_DEFENDERS
-        if (Defender.defenders[i].isDefending()) then
-          call AdjustPlayerStateBJ(valGold/n, Defender.defenders[i].p, PLAYER_STATE_RESOURCE_GOLD)
+      
+	  call Defender.iterate()
+	  loop
+	    exitwhen Defender.iterateFinished()
+	    set d = Defender.next()
+		if (d.isDefending()) then
+          call AdjustPlayerStateBJ(valGold/n, d.p, PLAYER_STATE_RESOURCE_GOLD)
           set valGold = valGold - valGold/n
           set n = n - 1
         endif
-        set i = i + 1
-      endloop
+	  endloop
     endif
 
     //handle towers
@@ -408,9 +395,9 @@ struct Defender
       if (numAllies > 0 and GetUnitTypeId(u) != 'u000') then //a tower we should give away
         loop
           set i = ModuloInteger(i + 1, NUM_DEFENDERS)
-          exitwhen Defender.defenders[i].isDefending()
+          exitwhen Defender.fromIndex(i).isDefending()
         endloop
-        call SetUnitOwner(u, Defender.defenders[i].p, true)
+        call SetUnitOwner(u, Defender.fromIndex(i).p, true)
       else
         call KillUnit(u)
       endif
@@ -454,15 +441,13 @@ struct Defender
   //////////
   private static method catchWoodChange takes nothing returns nothing
     local Defender d
-    local integer i = 1
-    loop
-      exitwhen i > NUM_DEFENDERS
-
-      set d = Defender.defenders[i]
-      call SetPlayerStateBJ(d.p, PLAYER_STATE_RESOURCE_LUMBER, d.getTotalTowerValue())
-
-      set i = i + 1
-    endloop
+	
+	call Defender.iterate()
+	loop
+	  exitwhen Defender.iterateFinished()
+	  set d = Defender.next()
+	  call SetPlayerStateBJ(d.p, PLAYER_STATE_RESOURCE_LUMBER, d.getTotalTowerValue())
+	endloop
   endmethod
 
   //////////
@@ -540,22 +525,19 @@ struct Defender
   //////////
   public static method catchCamRangeTick takes nothing returns nothing
     local Defender d
-    local integer i = 1
     
     if (Game.state == VAL_GAME_STATE_INTRO) then
       return
     endif
     
-    loop
-      exitwhen i > NUM_DEFENDERS
-
-      set d = Defender.defenders[i]
-      if(d.isPresent()) then
+	call Defender.iterate()
+	loop
+	  exitwhen Defender.iterateFinished()
+	  set d = Defender.next()
+	  if(d.isPresent()) then
         call SetCameraFieldForPlayer(d.p, CAMERA_FIELD_TARGET_DISTANCE, d.camRange, VAL_CAMTICKINTERVAL) 
       endif
-        
-      set i = i + 1
-    endloop
+	endloop
   endmethod
   
   /////////
@@ -570,26 +552,22 @@ struct Defender
   private static method catchItemSell takes nothing returns nothing
     local Defender d1
     local Defender d2
-    local integer i
-  
+    
     // buy life    
     if(GetItemTypeId(GetSoldItem()) == 'I000') then
       set d1 = Defender.fromUnit(GetBuyingUnit())
       call showMessage(d1.getNameWithColor() + " buy 1 Life.") 
       call RemoveItem(GetSoldItem())
     
-      set i = 1
-      loop
-        exitwhen i > NUM_DEFENDERS
-      
-        set d2 = Defender.defenders[i]
-        if(d2.isPresent()) then
+	  call Defender.iterate()
+	  loop
+	    exitwhen Defender.iterateFinished()
+		set d2 = Defender.next()
+		if(d2.isPresent()) then
           set d2.lives = d2.lives + 1
           call SetPlayerStateBJ(d2.p, PLAYER_STATE_RESOURCE_FOOD_USED, d2.lives)
         endif
-        
-        set i = i + 1
-      endloop
+	  endloop
     endif
   endmethod
 endstruct
