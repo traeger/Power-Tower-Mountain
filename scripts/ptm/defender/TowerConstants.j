@@ -148,6 +148,10 @@ library towerconstants
   constant function isCombatTower takes integer ut returns boolean
     return (not isBridgingTower(ut) and not isGenerator(ut))
   endfunction
+  //////////
+  constant function isProxyTower takes integer ut returns boolean
+    return (ut == 'h055') or (ut == 'h056') or (ut == 'h057')
+  endfunction
   
   function setStoneOfWin takes unit u returns nothing
     set STONE_OF_VICTORY = u

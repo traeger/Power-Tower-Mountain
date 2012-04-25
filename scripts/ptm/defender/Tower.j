@@ -201,7 +201,9 @@ struct Tower
       return
     endif
 
-    set this.level = this.level + 1
+	if(not isProxyTower(this.ut)) then
+      set this.level = this.level + 1
+	endif
     call this.updateProperties()
   endmethod
   //////////

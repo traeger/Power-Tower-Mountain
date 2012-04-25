@@ -202,6 +202,9 @@ library general
   endfunction
   
   function debugMsg takes string s, integer id returns nothing
+    if id == DEBUG then
+	  return 
+	endif
     call DisplayTextToForce(GetPlayersAll(), "> " + s)
   endfunction
 
