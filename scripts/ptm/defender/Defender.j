@@ -19,6 +19,10 @@ globals
   constant integer NUM_DEFENDERS = 8
   constant integer MAX_TIPS = 8
 
+  constant integer BUILDER_UNITTYPE_COMBAT = 'H100'
+  constant integer BUILDER_UNITTYPE_SUPPORT = 'H101'
+  constant integer BUILDER_UNITTYPE_SPECIAL = 'H101'
+  
   constant integer ABIL_TRANSFORM = 'A002'
   constant integer ABIL_TRANSFORM_COMBAT = 'A011'
   constant integer ABIL_TRANSFORM_SUPPORT = 'A010'
@@ -43,7 +47,7 @@ struct Defender
   
   readonly integer killedRunner = 0
 
-  private integer array skills
+  private static integer array skills
 
   public static method init0 takes nothing returns nothing
     local integer i
@@ -102,7 +106,7 @@ struct Defender
     if (d.isDefending()) then
       call SetPlayerStateBJ(d.p, PLAYER_STATE_RESOURCE_GOLD, 30)
       set c = GetPlayerStartLocationLoc(d.p)
-      set d.builder = CreateUnitAtLoc(d.p, 'u000', c, bj_UNIT_FACING) //builder (combat)
+      set d.builder = CreateUnitAtLoc(d.p, BUILDER_UNITTYPE_COMBAT, c, bj_UNIT_FACING) //builder (combat)
       //call UnitAddAbilityBJ('A00L', d.builder) //help
       call RemoveLocation(c)
       set c = null
@@ -278,6 +282,10 @@ struct Defender
     endif
     return GetPlayerState(this.p, PLAYER_STATE_RESOURCE_FOOD_CAP)
   endmethod
+  
+  //=====================================
+  //=== SKILL ===========================
+  //=====================================
 
   public method getSkillLevel takes integer skill returns integer
     return this.skills[skill]
@@ -293,7 +301,7 @@ struct Defender
   endmethod
 
   public method modSkillLevel takes integer skill, integer mod returns integer
-    return this.setSkillLevel(this.getSkillLevel(skill) + mod)
+    return this.setSkillLevel(skill, this.getSkillLevel(skill) + mod)
   endmethod
 
   public method incSkillLevel takes integer skill returns integer
@@ -345,14 +353,22 @@ struct Defender
   public method replaceUnit takes integer ut returns nothing
     local player p
     local boolean b
+	local integer level
     if (this == null or ut == nill) then
       return
     endif
 
-    //replace the builder without screwing player selection up
+    // replace the builder without screwing player selection up
+	// get builderunit setup
     set p = GetOwningPlayer(this.builder)
     set b = IsUnitSelected(this.builder, p)
-    set this.builder = ReplaceUnitWithItems(this.builder, ut, bj_UNIT_STATE_METHOD_ABSOLUTE)
+	set level = GetHeroLevel(this.builder)
+    
+	// replace
+	set this.builder = ReplaceUnitWithItems(this.builder, ut, bj_UNIT_STATE_METHOD_ABSOLUTE)
+	
+	// set builderunit setup
+	call SetHeroLevel(this.builder, level, false)
     if (b == true) then
       call SelectUnitAddForPlayer(this.builder, p)
     endif
@@ -479,15 +495,15 @@ struct Defender
     endif
 
     if (at == ABIL_TRANSFORM_COMBAT) then
-      call this.replaceUnit('u000')
+      call this.replaceUnit(BUILDER_UNITTYPE_COMBAT)
       call createBangTarget(this.builder, "Abilities\\Spells\\Items\\TomeOfRetraining\\TomeOfRetrainingCaster.mdl", "origin")
 
     elseif (at == ABIL_TRANSFORM_SUPPORT) then
-      call this.replaceUnit('u001')
+      call this.replaceUnit(BUILDER_UNITTYPE_SUPPORT)
       call createBangTarget(this.builder, "Abilities\\Spells\\Items\\TomeOfRetraining\\TomeOfRetrainingCaster.mdl", "origin")
       
     elseif (at == ABIL_TRANSFORM_SPECIAL) then
-      call this.replaceUnit('u002')
+      call this.replaceUnit(BUILDER_UNITTYPE_SPECIAL)
       call createBangTarget(this.builder, "Abilities\\Spells\\Items\\TomeOfRetraining\\TomeOfRetrainingCaster.mdl", "origin")
     
     elseif (at == 'A00X') then

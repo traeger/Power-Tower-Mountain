@@ -421,7 +421,7 @@ struct Game
       if (d.isDefending()) then
         call showPlayerMessage(d.p, "|cFFFFCC00+" + I2S(Game.currentRound.getRoundFinishBounty()) + " Bonus Gold|r")
         call AdjustPlayerStateBJ(Game.currentRound.getRoundFinishBounty(), d.p, PLAYER_STATE_RESOURCE_GOLD)
-        call SetHeroLevel(d.builder, GetHeroLevel(d.builder) + 1) // increment hero level by one per round
+        call SetHeroLevel(d.builder, GetHeroLevel(d.builder) + 1, true) // increment hero level by one per round
         if (roundTech != 0) then
           call SetPlayerTechResearchedSwap(roundTech, 1, d.p)
         endif
