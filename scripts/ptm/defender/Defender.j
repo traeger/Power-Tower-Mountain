@@ -35,6 +35,9 @@ globals
 endglobals
 
 struct Defender
+  static constant integer NUM_SKILLS = 1
+  static constant integer SKILL_ADVANCED_ENERGYRELAY_TRANSFER = 1
+
   //! runtextmacro StructAlloc_Fixed("Defender", "NUM_DEFENDERS")
   //! runtextmacro StructIterable_Fixed("Defender", "NUM_DEFENDERS")
   readonly static real camStdRange
@@ -47,7 +50,7 @@ struct Defender
   
   readonly integer killedRunner = 0
 
-  private static integer array skills
+  private integer array skills[Defender.NUM_SKILLS]
 
   public static method init0 takes nothing returns nothing
     local integer i
@@ -69,6 +72,7 @@ struct Defender
     call Events.registerForTick(function Defender.catchWoodChange)
     //call Events.registerForEsc(function Defender.catchEsc)
     call Events.registerForItemSell(function Defender.catchItemSell)
+	call Events.registerForLearnAbility(function Defender.catchLearnAbility)
   endmethod
   //! runtextmacro Init("Defender")
 
@@ -80,6 +84,7 @@ struct Defender
   private static method create takes integer i returns Defender
     local location c
     local Defender d
+	local integer j
     
 	set d = Defender.alloc(i)
 
@@ -108,9 +113,17 @@ struct Defender
       set c = GetPlayerStartLocationLoc(d.p)
       set d.builder = CreateUnitAtLoc(d.p, BUILDER_UNITTYPE_COMBAT, c, bj_UNIT_FACING) //builder (combat)
       //call UnitAddAbilityBJ('A00L', d.builder) //help
+	  
       call RemoveLocation(c)
       set c = null
     endif
+	
+	set j = 1
+	loop
+      exitwhen j > Defender.NUM_SKILLS
+      set d.skills[j] = 0
+      set j = j + 1
+    endloop
 
     return d
   endmethod
@@ -292,10 +305,9 @@ struct Defender
   endmethod
 
   public method setSkillLevel takes integer skill, integer mod returns integer
-    if(mod < 0) then
+    set this.skills[skill] = mod
+	if(this.skills[skill] < 0) then
       set this.skills[skill] = 0
-    else
-      set this.skills[skill] = mod
     endif
     return this.skills[skill]
   endmethod
@@ -306,6 +318,27 @@ struct Defender
 
   public method incSkillLevel takes integer skill returns integer
     return this.modSkillLevel(skill, 1)
+  endmethod
+  
+  public method updateAllTowerSkills takes nothing returns nothing
+    local group g
+    local unit u
+    local Tower t
+  
+    //handle towers
+    set g = GetUnitsOfPlayerAll(this.p)
+    loop
+      set u = FirstOfGroup(g)
+      exitwhen u == null
+	  call GroupRemoveUnit(g, u)
+	  
+      set t = Tower.fromUnit(u)
+	  if t != nill then
+	    call t.applyUpgradeSkills()
+	  endif
+    endloop
+    call DestroyGroup(g)
+    set g = null
   endmethod
 
   //=====================================
@@ -509,9 +542,9 @@ struct Defender
     elseif (at == 'A00X') then
       set this.camRange = this.camRange + VAL_CAMRANGESTEP
       if (this.camRange > VAL_CAMRANGEMAX) then
-        set this.camRange = VAL_CAMRANGEMAX
+       set this.camRange = VAL_CAMRANGEMAX
       endif
-
+     
     elseif (at == 'A00Y') then
       set this.camRange = this.camRange - VAL_CAMRANGESTEP
       if (this.camRange < VAL_CAMRANGEMIN) then
@@ -603,5 +636,25 @@ struct Defender
         endif
 	  endloop
     endif
+  endmethod
+  
+  private static method catchLearnAbility takes nothing returns nothing
+    local Defender d = Defender.fromUnit(GetTriggerUnit())
+	local integer skillID = GetLearnedSkillBJ()
+	local integer skill
+	
+	if(skillID == 'A100') then
+	  set skill = SKILL_ADVANCED_ENERGYRELAY_TRANSFER
+	else
+	  set skill = 0
+	endif
+	
+	if(skill == 0) then
+	  call debugMsg("no skill: " + I2S(skillID), WARNING)
+	  return
+	endif
+	call debugMsg("skill " + I2S(skill) + " leveled up.", DEBUG)
+	call d.incSkillLevel(skill)
+	call d.updateAllTowerSkills()
   endmethod
 endstruct

@@ -259,8 +259,31 @@ struct Tower
     if (this.at != nill) then
       call SetUnitAbilityLevelSwapped(this.at, this.u, this.level)
     endif
+	
+	// apply upgrades-skills which the defender can level
+	call this.applyUpgradeSkills()
 
     return true
+  endmethod
+  
+  // apply upgrades-skills which the defender can level
+  public method applyUpgradeSkills takes nothing returns nothing
+    local Defender d = Defender.fromUnit(this.u)
+	local integer tmp
+	local integer level
+	local integer levelmod
+	
+	if(d == nill) then
+	  return
+	endif
+	
+	// SKILL_ADVANCED_ENERGYRELAY_TRANSFER
+	if(isBridgingTower(this.ut)) then
+	  set tmp = this.transferPower
+	  set level = d.getSkillLevel(Defender.SKILL_ADVANCED_ENERGYRELAY_TRANSFER)
+	  set tmp = ((level * 5) * transferPower) / 100
+	  call SetUnitBonus(this.u, BONUS_ARMOR, tmp)
+	endif
   endmethod
 
   //////////

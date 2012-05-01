@@ -13,6 +13,9 @@
 //! import "scripts/structures/Menu.j"
 //! import "scripts/structures/Timer.j"
 
+//! import "scripts/externlibs/AbilityPreload.j"
+//! import "scripts/externlibs/BonusMod.j"
+
 ////////////
 // ptm
 ////////////
