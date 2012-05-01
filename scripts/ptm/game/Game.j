@@ -179,7 +179,9 @@ struct Game
   endmethod
   
   public static method StoneOfWin_max takes nothing returns integer
-    return 144000
+    //return 144000
+	return R2I( GetUnitState(StoneOfWin(), UNIT_STATE_MAX_MANA) )
+
   endmethod
 
   //=====================================
